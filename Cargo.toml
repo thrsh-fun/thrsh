@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = [
+    "programs/thrsh_core",
+    "libs/thrsh_math",
+    "cli",
