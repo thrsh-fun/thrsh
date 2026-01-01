@@ -4,3 +4,9 @@ members = [
     "programs/thrsh_core",
     "libs/thrsh_math",
     "cli",
+]
+
+[workspace.dependencies]
+anchor-lang = "0.30.1"
+anchor-spl = "0.30.1"
+solana-program = "1.18"
