@@ -2,3 +2,5 @@ target/
 node_modules/
 .anchor/
 test-ledger/
+dist/
+*.so
