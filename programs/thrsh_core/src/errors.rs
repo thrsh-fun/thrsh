@@ -11,3 +11,16 @@ pub enum ThrshError {
     #[msg("Market price data is stale and must be refreshed")]
     StalePriceData,
 
+    #[msg("Arithmetic overflow in price calculation")]
+    MathOverflow,
+
+    #[msg("Unauthorized access attempt")]
+    Unauthorized,
+
+    #[msg("Position size exceeds maximum allowed by Kelly criterion")]
+    PositionTooLarge,
+
+    #[msg("Invalid amount: must be greater than zero")]
+    InvalidAmount,
+
+    #[msg("Protocol is currently paused by admin")]
