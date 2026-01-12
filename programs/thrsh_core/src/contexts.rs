@@ -26,3 +26,31 @@ pub struct ScanMarkets<'info> {
         mut,
         seeds = [b"global"],
         bump = global_state.bump,
+    )]
+    pub global_state: Account<'info, GlobalState>,
+
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct DetectArbitrage<'info> {
+    #[account(
+        seeds = [b"global"],
+        bump = global_state.bump,
+    )]
+    pub global_state: Account<'info, GlobalState>,
+
+    pub market_a: Account<'info, MarketAccount>,
+    pub market_b: Account<'info, MarketAccount>,
+
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ExecuteHarvest<'info> {
+    #[account(
+        seeds = [b"global"],
+        bump = global_state.bump,
+    )]
+    pub global_state: Account<'info, GlobalState>,
+
