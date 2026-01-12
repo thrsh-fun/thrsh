@@ -20,3 +20,25 @@ impl GlobalState {
 pub struct ScanConfig {
     pub min_liquidity: u64,
     pub max_spread_bps: u64,
+    pub staleness_threshold: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct MarketInput {
+    pub market_key: Pubkey,
+    pub platform: Platform,
+    pub event_id: [u8; 32],
+    pub yes_price: u64,
+    pub no_price: u64,
+    pub volume: u64,
+    pub liquidity: u64,
+    pub last_updated: u64,
+}
+
+#[account]
+pub struct MarketAccount {
+    pub platform: Platform,
+    pub event_id: [u8; 32],
+    pub yes_price: u64,
+    pub no_price: u64,
+    pub volume: u64,
