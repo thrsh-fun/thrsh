@@ -1,0 +1,8 @@
+[package]
+name = "thrsh-core"
+version = "0.1.0"
+edition = "2021"
+description = "Cross-market prediction market arbitrage engine"
+license = "MIT"
+
+[lib]
