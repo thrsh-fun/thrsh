@@ -14,3 +14,13 @@ no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
 cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }
+thrsh-math = { path = "../../libs/thrsh_math" }
+
+[dev-dependencies]
+solana-program-test = "1.18"
+solana-sdk = "1.18"
