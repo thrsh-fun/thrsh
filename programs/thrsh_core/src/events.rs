@@ -18,3 +18,14 @@ pub struct MatchFound {
 #[event]
 pub struct ArbitrageDetected {
     pub match_id: [u8; 32],
+    pub yield_est: u64,
+    pub confidence: u16,
+    pub kelly_fraction: u64,
+}
+
+#[event]
+pub struct HarvestExecuted {
+    pub match_id: [u8; 32],
+    pub amount: u64,
+    pub yield_est: u64,
+}
