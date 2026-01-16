@@ -64,3 +64,25 @@ pub struct EventMatch {
 #[account]
 pub struct Position {
     pub owner: Pubkey,
+    pub market_a: Pubkey,
+    pub market_b: Pubkey,
+    pub side: Side,
+    pub amount: u64,
+    pub entry_yield: u64,
+    pub opened_at: u64,
+    pub bump: u8,
+}
+
+impl Position {
+    pub const SIZE: usize = 8 + 32 + 32 + 32 + 1 + 8 + 8 + 8 + 1;
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct ArbitrageOpportunity {
+    pub match_id: [u8; 32],
+    pub market_a: Pubkey,
+    pub market_b: Pubkey,
+    pub yield_est: u64,
+    pub confidence: u16,
+    pub kelly_fraction: u64,
+    pub timestamp: u64,
