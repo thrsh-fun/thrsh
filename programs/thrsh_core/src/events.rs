@@ -8,3 +8,13 @@ pub struct Initialized {
 }
 
 #[event]
+pub struct MatchFound {
+    pub market_a: Pubkey,
+    pub market_b: Pubkey,
+    pub similarity_score: u16,
+    pub spread_bps: u64,
+}
+
+#[event]
+pub struct ArbitrageDetected {
+    pub match_id: [u8; 32],
