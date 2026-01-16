@@ -54,3 +54,33 @@ pub struct ExecuteHarvest<'info> {
     )]
     pub global_state: Account<'info, GlobalState>,
 
+    #[account(
+        init_if_needed,
+        payer = authority,
+        space = Position::SIZE,
+        seeds = [b"position", authority.key().as_ref()],
+        bump,
+    )]
+    pub position: Account<'info, Position>,
+
+    #[account(mut)]
+    pub vault: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AdminOnly<'info> {
+    #[account(
+        mut,
+        seeds = [b"global"],
+        bump = global_state.bump,
+    )]
+    pub global_state: Account<'info, GlobalState>,
+
+    pub authority: Signer<'info>,
+}
