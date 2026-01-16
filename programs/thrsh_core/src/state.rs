@@ -42,3 +42,25 @@ pub struct MarketAccount {
     pub yes_price: u64,
     pub no_price: u64,
     pub volume: u64,
+    pub liquidity: u64,
+    pub status: MarketStatus,
+    pub last_updated: u64,
+    pub bump: u8,
+}
+
+impl MarketAccount {
+    pub const SIZE: usize = 8 + 1 + 32 + 8 + 8 + 8 + 8 + 1 + 8 + 1;
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct EventMatch {
+    pub market_a: Pubkey,
+    pub market_b: Pubkey,
+    pub similarity_score: u16,
+    pub spread_bps: u64,
+    pub timestamp: u64,
+}
+
+#[account]
+pub struct Position {
+    pub owner: Pubkey,
