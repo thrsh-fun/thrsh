@@ -24,3 +24,17 @@ pub enum ThrshError {
     InvalidAmount,
 
     #[msg("Protocol is currently paused by admin")]
+    ProtocolPaused,
+
+    #[msg("Market has already been settled")]
+    MarketSettled,
+
+    #[msg("Event ID format is invalid")]
+    InvalidEventId,
+
+    #[msg("Duplicate match entry detected")]
+    DuplicateMatch,
+
+    #[msg("Insufficient liquidity in target market")]
+    InsufficientLiquidity,
+}
