@@ -86,3 +86,26 @@ pub struct ArbitrageOpportunity {
     pub confidence: u16,
     pub kelly_fraction: u64,
     pub timestamp: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+pub enum Platform {
+    Polymarket,
+    Drift,
+    Hedgehog,
+    MetaDAO,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+pub enum MarketStatus {
+    Active,
+    Settling,
+    Settled,
+    Expired,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+pub enum Side {
+    Yes,
+    No,
+}
