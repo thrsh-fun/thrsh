@@ -178,3 +178,66 @@ pub mod thrsh_core {
         position.entry_yield = opportunity.yield_est;
         position.opened_at = Clock::get()?.unix_timestamp as u64;
 
+        emit!(HarvestExecuted {
+            match_id: opportunity.match_id,
+            amount,
+            yield_est: opportunity.yield_est,
+        });
+
+        Ok(())
+    }
+
+    pub fn pause(ctx: Context<AdminOnly>) -> Result<()> {
+        let global = &mut ctx.accounts.global_state;
+        require!(
+            ctx.accounts.authority.key() == global.authority,
+            ThrshError::Unauthorized
+        );
+        global.paused = true;
+        Ok(())
+    }
+
+    pub fn unpause(ctx: Context<AdminOnly>) -> Result<()> {
+        let global = &mut ctx.accounts.global_state;
+        require!(
+            ctx.accounts.authority.key() == global.authority,
+            ThrshError::Unauthorized
+        );
+        global.paused = false;
+        Ok(())
+    }
+}
+
+fn compute_similarity(a: &[u8; 32], b: &[u8; 32]) -> u16 {
+    let mut matching = 0u32;
+    for i in 0..32 {
+        if a[i] == b[i] {
+            matching += 1;
+        }
+    }
+    ((matching * 1000) / 32) as u16
+}
+
+fn compute_spread_bps(price_a: u64, price_b: u64) -> u64 {
+    let diff = if price_a > price_b {
+        price_a - price_b
+    } else {
+        price_b - price_a
+    };
+    (diff * 10_000) / price_a.max(1)
+}
+
+fn derive_match_id(a: Pubkey, b: Pubkey) -> [u8; 32] {
+    let mut hasher = anchor_lang::solana_program::hash::Hasher::default();
+    hasher.hash(a.as_ref());
+    hasher.hash(b.as_ref());
+    hasher.result().to_bytes()
+}
+
+fn compute_max_position(kelly_fraction: u64, vault_balance: u64) -> u64 {
+    vault_balance
+        .checked_mul(kelly_fraction)
+        .unwrap_or(0)
+        .checked_div(10_000)
+        .unwrap_or(0)
+}
