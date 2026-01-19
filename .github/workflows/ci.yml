@@ -19,3 +19,24 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo build -p thrsh-math -p thrsh-cli
+      - run: cargo test -p thrsh-math
+
+  sdk:
+    name: SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: cd sdk && yarn install
+      - run: cd sdk && yarn test
