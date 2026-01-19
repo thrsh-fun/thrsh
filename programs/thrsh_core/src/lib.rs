@@ -118,3 +118,63 @@ pub mod thrsh_core {
         let yield_est = thrsh_math::expected_value(
             market_a.yes_price,
             market_b.yes_price,
+            10_000,
+        );
+
+        let kelly = thrsh_math::kelly_fraction(
+            market_a.yes_price as u128,
+            market_b.yes_price as u128,
+            10_000,
+        );
+
+        let confidence = match_data.similarity_score.min(1000);
+
+        let opp = ArbitrageOpportunity {
+            match_id: derive_match_id(market_a.key(), market_b.key()),
+            market_a: market_a.key(),
+            market_b: market_b.key(),
+            yield_est,
+            confidence,
+            kelly_fraction: kelly as u64,
+            timestamp: Clock::get()?.unix_timestamp as u64,
+        };
+
+        emit!(ArbitrageDetected {
+            match_id: opp.match_id,
+            yield_est: opp.yield_est,
+            confidence: opp.confidence,
+            kelly_fraction: opp.kelly_fraction,
+        });
+
+        Ok(opp)
+    }
+
+    pub fn execute_harvest(
+        ctx: Context<ExecuteHarvest>,
+        opportunity: ArbitrageOpportunity,
+        amount: u64,
+    ) -> Result<()> {
+        let global = &ctx.accounts.global_state;
+        require!(!global.paused, ThrshError::ProtocolPaused);
+
+        let authority = &ctx.accounts.authority;
+        require!(
+            authority.key() == global.authority,
+            ThrshError::Unauthorized
+        );
+
+        require!(amount > 0, ThrshError::InvalidAmount);
+        require!(
+            amount <= compute_max_position(opportunity.kelly_fraction, ctx.accounts.vault.amount),
+            ThrshError::PositionTooLarge
+        );
+
+        let position = &mut ctx.accounts.position;
+        position.owner = authority.key();
+        position.market_a = opportunity.market_a;
+        position.market_b = opportunity.market_b;
+        position.side = Side::Yes;
+        position.amount = amount;
+        position.entry_yield = opportunity.yield_est;
+        position.opened_at = Clock::get()?.unix_timestamp as u64;
+
