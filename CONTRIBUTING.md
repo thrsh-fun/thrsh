@@ -16,3 +16,13 @@ Thanks for your interest in contributing.
 - Ensure `cargo fmt` and `cargo clippy` pass without warnings.
 - Add tests for new functionality.
 - Keep PRs focused -- one logical change per PR.
+
+## Code Style
+
+- Rust: follow `rustfmt.toml` settings in the repo root.
+- TypeScript: Prettier with default settings.
+- Documentation: write doc comments for all public items.
+
+## Reporting Issues
+
+Open an issue with a clear description, reproduction steps, and expected behavior.
