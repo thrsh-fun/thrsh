@@ -6,3 +6,6 @@ dist/
 *.so
 *.dylib
 *.log
+.env
+.DS_Store
+main.py
