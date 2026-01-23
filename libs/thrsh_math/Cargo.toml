@@ -2,3 +2,7 @@
 name = "thrsh-math"
 version = "0.1.0"
 edition = "2021"
+description = "Kelly Criterion and probability math for thrsh arbitrage engine"
+license = "MIT"
+
+[dependencies]
