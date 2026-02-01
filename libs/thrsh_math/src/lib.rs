@@ -67,3 +67,72 @@ pub fn expected_value(price_a: u64, price_b: u64, scale: u64) -> u64 {
 /// Convert a market price (in bps) to an implied probability (in bps).
 pub fn implied_probability(price_bps: u64, scale: u64) -> u64 {
     price_bps.min(scale)
+}
+
+/// Detect whether a probability gap exists between two markets.
+///
+/// Returns `true` if `price_a + price_b < scale - threshold_bps`.
+pub fn has_probability_gap(price_a: u64, price_b: u64, scale: u64, threshold_bps: u64) -> bool {
+    let combined = price_a.saturating_add(price_b);
+    combined < scale.saturating_sub(threshold_bps)
+}
+
+/// Calculate optimal bet sizing given Kelly fraction and bankroll.
+///
+/// Returns the amount to wager, clamped to `max_position`.
+pub fn optimal_bet_size(kelly_bps: u64, bankroll: u64, max_position: u64) -> u64 {
+    let raw = bankroll
+        .checked_mul(kelly_bps)
+        .unwrap_or(0)
+        .checked_div(10_000)
+        .unwrap_or(0);
+    raw.min(max_position)
+}
+
+/// Fractional Kelly: apply a conservative multiplier (in bps) to
+/// the full Kelly fraction.
+pub fn fractional_kelly(full_kelly_bps: u128, fraction_bps: u128, scale: u128) -> u128 {
+    full_kelly_bps
+        .checked_mul(fraction_bps)
+        .unwrap_or(0)
+        .checked_div(scale.max(1))
+        .unwrap_or(0)
+}
+
+/// Geometric mean return for a series of outcome yields (each in bps).
+///
+/// Uses the product of (1 + yield/scale) terms, then extracts the nth root
+/// approximation via iterative averaging.
+pub fn geometric_mean_return(yields: &[u64], scale: u64) -> u64 {
+    if yields.is_empty() || scale == 0 {
+        return 0;
+    }
+
+    let mut product: u128 = scale as u128;
+    for &y in yields {
+        product = product
+            .checked_mul((scale as u128).saturating_add(y as u128))
+            .unwrap_or(0)
+            .checked_div(scale as u128)
+            .unwrap_or(0);
+    }
+
+    let n = yields.len() as u32;
+    let mut guess = product / (yields.len() as u128).max(1);
+    for _ in 0..20 {
+        if guess == 0 {
+            break;
+        }
+        let powered = iterative_pow(guess, n, scale as u128);
+        let adjustment = product
+            .checked_mul(scale as u128)
+            .unwrap_or(0)
+            .checked_div(powered.max(1))
+            .unwrap_or(0);
+        guess = (guess.saturating_add(adjustment)) / 2;
+    }
+
+    guess.saturating_sub(scale as u128) as u64
+}
+
+fn iterative_pow(base: u128, exp: u32, scale: u128) -> u128 {
