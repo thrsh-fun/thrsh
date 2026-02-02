@@ -136,3 +136,72 @@ pub fn geometric_mean_return(yields: &[u64], scale: u64) -> u64 {
 }
 
 fn iterative_pow(base: u128, exp: u32, scale: u128) -> u128 {
+    let mut result = scale;
+    for _ in 0..exp {
+        result = result.checked_mul(base).unwrap_or(0).checked_div(scale.max(1)).unwrap_or(0);
+    }
+    result
+}
+
+/// Compute variance of yield samples (in bps squared).
+pub fn yield_variance(yields: &[u64], scale: u64) -> u64 {
+    if yields.len() < 2 || scale == 0 {
+        return 0;
+    }
+    let n = yields.len() as u64;
+    let mean = yields.iter().copied().sum::<u64>() / n;
+    let sum_sq: u64 = yields
+        .iter()
+        .map(|&y| {
+            let diff = if y > mean { y - mean } else { mean - y };
+            diff.saturating_mul(diff)
+        })
+        .sum();
+    sum_sq / (n - 1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn kelly_zero_when_no_edge() {
+        assert_eq!(kelly_fraction(5_000, 5_000, 10_000), 0);
+    }
+
+    #[test]
+    fn kelly_positive_when_edge_exists() {
+        let f = kelly_fraction(4_000, 4_000, 10_000);
+        assert!(f > 0, "expected positive kelly fraction, got {}", f);
+    }
+
+    #[test]
+    fn expected_value_basic() {
+        assert_eq!(expected_value(4_500, 4_500, 10_000), 1_000);
+        assert_eq!(expected_value(5_000, 5_000, 10_000), 0);
+    }
+
+    #[test]
+    fn probability_gap_detection() {
+        assert!(has_probability_gap(4_000, 4_000, 10_000, 100));
+        assert!(!has_probability_gap(5_000, 5_000, 10_000, 100));
+    }
+
+    #[test]
+    fn optimal_bet_respects_max() {
+        let bet = optimal_bet_size(2_000, 100_000, 5_000);
+        assert_eq!(bet, 5_000);
+    }
+
+    #[test]
+    fn fractional_kelly_halves() {
+        let full = 2_000u128;
+        let half = fractional_kelly(full, 5_000, 10_000);
+        assert_eq!(half, 1_000);
+    }
+
+    #[test]
+    fn variance_of_identical_values_is_zero() {
+        assert_eq!(yield_variance(&[100, 100, 100], 10_000), 0);
+    }
+}
