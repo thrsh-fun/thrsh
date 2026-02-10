@@ -16,3 +16,21 @@ export function priceToBps(price: number): BN {
  * Convert basis points to a decimal price (0.0 - 1.0).
  */
 export function bpsToPrice(bps: BN): number {
+  return bps.toNumber() / 10_000;
+}
+
+/**
+ * Calculate the implied probability from a market price in basis points.
+ */
+export function impliedProbability(priceBps: BN): number {
+  return bpsToPrice(priceBps);
+}
+
+/**
+ * Calculate the spread between two prices in basis points.
+ */
+export function spreadBps(priceA: BN, priceB: BN): BN {
+  const diff = priceA.gt(priceB) ? priceA.sub(priceB) : priceB.sub(priceA);
+  return diff;
+}
+
