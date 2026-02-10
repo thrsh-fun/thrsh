@@ -34,3 +34,21 @@ export function spreadBps(priceA: BN, priceB: BN): BN {
   return diff;
 }
 
+/**
+ * Check if two prices represent an arbitrage opportunity.
+ * An opportunity exists when YES_A + YES_B < SCALE.
+ */
+export function isArbitrage(yesPriceA: BN, yesPriceB: BN): boolean {
+  return yesPriceA.add(yesPriceB).lt(SCALE);
+}
+
+/**
+ * Calculate the expected yield from an arbitrage position.
+ */
+export function expectedYield(yesPriceA: BN, yesPriceB: BN): BN {
+  const combined = yesPriceA.add(yesPriceB);
+  if (combined.gte(SCALE)) return new BN(0);
+  return SCALE.sub(combined);
+}
+
+/**
