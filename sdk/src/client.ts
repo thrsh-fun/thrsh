@@ -68,3 +68,73 @@ export class ThrshClient {
     );
   }
 
+  /**
+   * Scan connected prediction markets and return matched event pairs.
+   *
+   * Fetches all MarketAccount entries from the program, filters by the
+   * provided config thresholds, and pairs events across platforms.
+   */
+  async scanMarkets(config: ScanConfig): Promise<ScanResult> {
+    const [globalPDA] = this.getGlobalStatePDA();
+
+    const accounts = await this.retryRpc(() =>
+      this.connection.getProgramAccounts(PROGRAM_ID, {
+        commitment: this.commitment,
+        filters: [{ dataSize: 85 }],
+      })
+    );
+
+    const markets: MarketAccount[] = accounts.map((acc) =>
+      this.deserializeMarket(acc.account.data)
+    );
+
+    const filtered = markets.filter(
+      (m) =>
+        m.liquidity.gte(config.minLiquidity) &&
+        new BN(Date.now() / 1000)
+          .sub(m.lastUpdated)
+          .lte(config.stalenessThreshold)
+    );
+
+    const matches: EventMatch[] = [];
+    for (let i = 0; i < filtered.length; i++) {
+      for (let j = i + 1; j < filtered.length; j++) {
+        const a = filtered[i];
+        const b = filtered[j];
+
+        if (a.platform === b.platform) continue;
+
+        const similarity = this.computeSimilarity(a.eventId, b.eventId);
+        if (similarity < 800) continue;
+
+        const spread = this.computeSpreadBps(a.yesPrice, b.yesPrice);
+        if (spread.gt(config.maxSpreadBps)) continue;
+
+        matches.push({
+          marketA: accounts[i].pubkey,
+          marketB: accounts[j].pubkey,
+          similarityScore: similarity,
+          spreadBps: spread,
+          timestamp: new BN(Math.floor(Date.now() / 1000)),
+        });
+      }
+    }
+
+    return {
+      matches,
+      scannedAt: Date.now(),
+      marketsProcessed: filtered.length,
+    };
+  }
+
+  /**
+   * Analyze a matched event pair and determine if an arbitrage opportunity
+   * exists with sufficient yield.
+   */
+  async detectArbitrage(
+    match_: EventMatch,
+    minYieldBps: number
+  ): Promise<DetectResult | null> {
+    const marketAInfo = await this.retryRpc(() =>
+      this.connection.getAccountInfo(match_.marketA)
+    );
