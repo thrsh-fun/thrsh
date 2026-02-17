@@ -40,3 +40,45 @@ export interface EventMatch {
 }
 
 export interface Position {
+  owner: PublicKey;
+  marketA: PublicKey;
+  marketB: PublicKey;
+  side: Side;
+  amount: BN;
+  entryYield: BN;
+  openedAt: BN;
+}
+
+export interface ArbitrageOpportunity {
+  matchId: Uint8Array;
+  marketA: PublicKey;
+  marketB: PublicKey;
+  yieldEst: BN;
+  confidence: number;
+  kellyFraction: BN;
+  timestamp: BN;
+}
+
+export interface ScanConfig {
+  minLiquidity: BN;
+  maxSpreadBps: BN;
+  stalenessThreshold: BN;
+}
+
+export interface ScanResult {
+  matches: EventMatch[];
+  scannedAt: number;
+  marketsProcessed: number;
+}
+
+export interface DetectResult {
+  opportunity: ArbitrageOpportunity;
+  detectedAt: number;
+}
+
+export interface HarvestResult {
+  signature: string;
+  matchId: Uint8Array;
+  amount: BN;
+  yieldEst: BN;
+}
