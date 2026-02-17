@@ -52,3 +52,24 @@ export function expectedYield(yesPriceA: BN, yesPriceB: BN): BN {
 }
 
 /**
+ * Format a BN value as a human-readable basis points string.
+ */
+export function formatBps(bps: BN): string {
+  const value = bps.toNumber();
+  return (value / 100).toFixed(2) + "%";
+}
+
+/**
+ * Format lamports to SOL with specified decimal places.
+ */
+export function lamportsToSol(lamports: BN, decimals: number = 4): string {
+  const sol = lamports.toNumber() / 1_000_000_000;
+  return sol.toFixed(decimals);
+}
+
+/**
+ * Sleep utility for async retry logic.
+ */
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
