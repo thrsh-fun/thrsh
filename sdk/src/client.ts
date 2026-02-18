@@ -208,3 +208,76 @@ export class ThrshClient {
     const sig = await this.provider.sendAndConfirm(tx);
 
     return {
+      signature: sig,
+      matchId: opportunity.matchId,
+      amount,
+      yieldEst: opportunity.yieldEst,
+    };
+  }
+
+  /** Retry an RPC call up to MAX_RETRIES times on transient failures. */
+  private async retryRpc<T>(fn: () => Promise<T>): Promise<T> {
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        return await fn();
+      } catch (err) {
+        lastError = err as Error;
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  private computeSimilarity(a: Uint8Array, b: Uint8Array): number {
+    let matching = 0;
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      if (a[i] === b[i]) matching++;
+    }
+    return Math.floor((matching * 1000) / 32);
+  }
+
+  private computeSpreadBps(priceA: BN, priceB: BN): BN {
+    const diff = priceA.gt(priceB) ? priceA.sub(priceB) : priceB.sub(priceA);
+    const max = priceA.gt(priceB) ? priceA : priceB;
+    return diff.mul(new BN(10_000)).div(max.isZero() ? new BN(1) : max);
+  }
+
+  private kellyFraction(priceA: BN, priceB: BN, scale: BN): BN {
+    const combined = priceA.add(priceB);
+    if (combined.gte(scale)) return new BN(0);
+    const edge = scale.sub(combined);
+    return edge.mul(scale).div(combined.isZero() ? new BN(1) : combined);
+  }
+
+  private deriveMatchId(a: PublicKey, b: PublicKey): Uint8Array {
+    const combined = Buffer.concat([a.toBuffer(), b.toBuffer()]);
+    const crypto = require("crypto");
+    return new Uint8Array(crypto.createHash("sha256").update(combined).digest());
+  }
+
+  private deserializeMarket(data: Buffer): MarketAccount {
+    const offset = 8;
+    const platform = data[offset];
+    const eventId = data.slice(offset + 1, offset + 33);
+    const yesPrice = new BN(data.slice(offset + 33, offset + 41), "le");
+    const noPrice = new BN(data.slice(offset + 41, offset + 49), "le");
+    const volume = new BN(data.slice(offset + 49, offset + 57), "le");
+    const liquidity = new BN(data.slice(offset + 57, offset + 65), "le");
+    const status = data[offset + 65];
+    const lastUpdated = new BN(data.slice(offset + 66, offset + 74), "le");
+
+    return {
+      platform,
+      eventId: new Uint8Array(eventId),
+      yesPrice,
+      noPrice,
+      volume,
+      liquidity,
+      status,
+      lastUpdated,
+    };
+  }
+}
