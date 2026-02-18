@@ -6,3 +6,11 @@ export {
   MarketAccount,
   EventMatch,
   Position,
+  ArbitrageOpportunity,
+  ScanConfig,
+  ScanResult,
+  DetectResult,
+  HarvestResult,
+} from "./types";
+export {
+  priceToBps,
