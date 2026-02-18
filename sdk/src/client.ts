@@ -138,3 +138,73 @@ export class ThrshClient {
     const marketAInfo = await this.retryRpc(() =>
       this.connection.getAccountInfo(match_.marketA)
     );
+    const marketBInfo = await this.retryRpc(() =>
+      this.connection.getAccountInfo(match_.marketB)
+    );
+
+    if (!marketAInfo || !marketBInfo) {
+      return null;
+    }
+
+    const marketA = this.deserializeMarket(marketAInfo.data);
+    const marketB = this.deserializeMarket(marketBInfo.data);
+
+    const combined = marketA.yesPrice.add(marketB.yesPrice);
+    const scale = new BN(10_000);
+
+    if (combined.gte(scale)) {
+      return null;
+    }
+
+    const yieldEst = scale.sub(combined);
+    if (yieldEst.toNumber() < minYieldBps) {
+      return null;
+    }
+
+    const kellyFraction = this.kellyFraction(
+      marketA.yesPrice,
+      marketB.yesPrice,
+      scale
+    );
+
+    return {
+      opportunity: {
+        matchId: this.deriveMatchId(match_.marketA, match_.marketB),
+        marketA: match_.marketA,
+        marketB: match_.marketB,
+        yieldEst,
+        confidence: match_.similarityScore,
+        kellyFraction,
+        timestamp: new BN(Math.floor(Date.now() / 1000)),
+      },
+      detectedAt: Date.now(),
+    };
+  }
+
+  /**
+   * Execute a harvest transaction for a detected arbitrage opportunity.
+   * Builds and sends the transaction atomically.
+   */
+  async executeHarvest(
+    opportunity: ArbitrageOpportunity,
+    amount: BN,
+    vaultAddress: PublicKey
+  ): Promise<HarvestResult> {
+    const [globalPDA] = this.getGlobalStatePDA();
+    const [positionPDA] = this.getPositionPDA(this.wallet.publicKey);
+
+    const ix = new TransactionInstruction({
+      keys: [
+        { pubkey: globalPDA, isSigner: false, isWritable: false },
+        { pubkey: positionPDA, isSigner: false, isWritable: true },
+        { pubkey: vaultAddress, isSigner: false, isWritable: true },
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: true },
+      ],
+      programId: PROGRAM_ID,
+      data: Buffer.from([]),
+    });
+
+    const tx = new Transaction().add(ix);
+    const sig = await this.provider.sendAndConfirm(tx);
+
+    return {
