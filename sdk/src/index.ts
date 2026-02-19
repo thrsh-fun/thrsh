@@ -14,3 +14,12 @@ export {
 } from "./types";
 export {
   priceToBps,
+  bpsToPrice,
+  impliedProbability,
+  spreadBps,
+  isArbitrage,
+  expectedYield,
+  formatBps,
+  lamportsToSol,
+  sleep,
+} from "./utils";
