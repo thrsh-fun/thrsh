@@ -46,3 +46,52 @@ describe("thrsh SDK utilities", () => {
       expect(isArbitrage(new BN(4500), new BN(4500))).toBe(true);
     });
 
+    it("returns false when combined price equals 10000 bps", () => {
+      expect(isArbitrage(new BN(5000), new BN(5000))).toBe(false);
+    });
+
+    it("returns false when combined price exceeds 10000 bps", () => {
+      expect(isArbitrage(new BN(6000), new BN(5000))).toBe(false);
+    });
+  });
+
+  describe("expectedYield", () => {
+    it("calculates correct yield for a 1000bps gap", () => {
+      const y = expectedYield(new BN(4500), new BN(4500));
+      expect(y.toNumber()).toBe(1000);
+    });
+
+    it("returns zero when no gap exists", () => {
+      const y = expectedYield(new BN(5000), new BN(5000));
+      expect(y.toNumber()).toBe(0);
+    });
+  });
+
+  describe("spreadBps", () => {
+    it("calculates absolute spread between two prices", () => {
+      const s = spreadBps(new BN(4800), new BN(4500));
+      expect(s.toNumber()).toBe(300);
+    });
+
+    it("returns zero for equal prices", () => {
+      const s = spreadBps(new BN(4500), new BN(4500));
+      expect(s.toNumber()).toBe(0);
+    });
+  });
+
+  describe("formatBps", () => {
+    it("formats 250 bps as 2.50%", () => {
+      expect(formatBps(new BN(250))).toBe("2.50%");
+    });
+  });
+
+  describe("lamportsToSol", () => {
+    it("converts 1 SOL worth of lamports", () => {
+      expect(lamportsToSol(new BN(1_000_000_000))).toBe("1.0000");
+    });
+
+    it("handles fractional SOL", () => {
+      expect(lamportsToSol(new BN(500_000_000), 2)).toBe("0.50");
+    });
+  });
+});
