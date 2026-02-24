@@ -1,0 +1,9 @@
+[package]
+name = "thrsh-cli"
+version = "0.1.0"
+edition = "2021"
+description = "CLI tool for the thrsh arbitrage scanner"
+license = "MIT"
+
+[[bin]]
+name = "thrsh"
