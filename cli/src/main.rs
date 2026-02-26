@@ -57,3 +57,63 @@ enum Commands {
 
         /// Amount in lamports
         #[arg(long)]
+        amount: u64,
+    },
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    let client = RpcClient::new_with_commitment(
+        cli.rpc_url.clone(),
+        CommitmentConfig::confirmed(),
+    );
+
+    let keypair = cli.keypair.as_ref().map(|path| {
+        read_keypair_file(path).unwrap_or_else(|err| {
+            eprintln!("Failed to read keypair from {}: {}", path.display(), err);
+            std::process::exit(1);
+        })
+    });
+
+    match cli.command {
+        Commands::Scan {
+            min_liquidity,
+            max_staleness,
+        } => {
+            println!(
+                "Scanning markets (min_liquidity={}, max_staleness={}s)",
+                min_liquidity, max_staleness
+            );
+            let version = client.get_version().unwrap_or_else(|err| {
+                eprintln!("RPC connection failed: {}", err);
+                std::process::exit(1);
+            });
+            println!("Connected to Solana {}", version.solana_core);
+
+            match cli.format {
+                OutputFormat::Table => {
+                    println!("{:<44} {:<44} {:<8} {:<10}", "Market A", "Market B", "Score", "Spread");
+                    println!("{}", "-".repeat(110));
+                }
+                OutputFormat::Json => {
+                    println!("[]");
+                }
+            }
+        }
+        Commands::Detect { min_yield_bps } => {
+            println!("Detecting arbitrage (min_yield={}bps)", min_yield_bps);
+            let _kp = keypair.as_ref().unwrap_or_else(|| {
+                eprintln!("Keypair required for detect command");
+                std::process::exit(1);
+            });
+        }
+        Commands::Harvest { match_id, amount } => {
+            println!("Executing harvest (match={}, amount={})", match_id, amount);
+            let _kp = keypair.as_ref().unwrap_or_else(|| {
+                eprintln!("Keypair required for harvest command");
+                std::process::exit(1);
+            });
+        }
+    }
+}
